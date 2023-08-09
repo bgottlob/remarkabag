@@ -25,4 +25,14 @@ remarkabag-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
+# Local environment file
 .env
+
+# Vim backup files
+*.swp
+
+# Mnesia table data
+Mnesia.*
+
+# Local direnv files
+.direnv
