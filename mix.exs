@@ -14,7 +14,10 @@ defmodule Remarkabag.MixProject do
   def application do
     [
       mod: {Remarkabag, []},
-      extra_applications: [:logger]
+      extra_applications: [
+        :logger,
+        :mnesia
+      ]
     ]
   end
 
@@ -26,7 +29,8 @@ defmodule Remarkabag.MixProject do
       {:jason, "~> 1.4"},
       {:multipart, "~> 0.4"},
       {:oauth2, "~> 2.0"},
-      {:req, "~> 0.4"}
+      {:req, "~> 0.4"},
+      {:uuid, "~> 1.1"}
     ]
   end
 end
