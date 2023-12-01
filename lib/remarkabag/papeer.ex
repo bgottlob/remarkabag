@@ -1,5 +1,5 @@
 defmodule Remarkabag.Papeer do
-  alias Remarkabag.Wallabag.Entry
+  alias Remarkabag.Entry
 
   @directory "/tmp/remarkabag/papeer"
   def download_entry(entry = %Entry{title: title, url: url}) do

@@ -1,30 +1,44 @@
 defmodule Remarkabag do
   use Application
+  require Logger
 
   alias Remarkabag.{PDF, Remarkable, Wallabag}
+  alias Remarkabag.Entry
+  alias :mnesia, as: Mnesia
 
   @impl true
   def start(_type, _args) do
     children = [
-      {ChromicPDF, chromic_pdf_opts()}
+      {ChromicPDF, chromic_pdf_opts()},
+      {Remarkable, []},
+      {Wallabag, []},
+      {PDF, []}
     ]
 
+    :ok = create_mnesia()
+
     Supervisor.start_link(children, strategy: :one_for_one, name: Remarkabag.Supervisor)
+  end
+
+  defp create_mnesia() do
+    node = node()
+
+    case Mnesia.create_schema([node]) do
+      :ok ->
+        Logger.info("Created Mnesia schema for current node #{node}")
+
+      {:error, {^node, {:already_exists, ^node}}} ->
+        Logger.info("Mnesia schema already exists on current node #{node}")
+    end
+
+    :ok = Entry.create_table()
+
+    :ok
   end
 
   defp chromic_pdf_opts do
     [
       session_pool: [timeout: 60_000]
     ]
-  end
-
-  def run() do
-    Wallabag.oauth_client()
-    |> Wallabag.all_entries()
-    |> Enum.each(fn entry ->
-      entry
-      |> PDF.download_entry()
-      |> Remarkable.upload()
-    end)
   end
 end

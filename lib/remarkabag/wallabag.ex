@@ -1,7 +1,30 @@
 defmodule Remarkabag.Wallabag do
-  alias Remarkabag.Wallabag.Entry
+  require Logger
+  alias Remarkabag.Entry
 
-  def oauth_client do
+  def child_spec([]) do
+    %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, []},
+      type: :worker,
+      restart: :permanent
+    }
+  end
+
+  def start_link() do
+    Logger.info "Starting Wallabag syncer"
+    Task.start_link(__MODULE__, :loop, [])
+  end
+
+  # 15 minutes between runs
+  @sleep 15 * 60 * 1000
+  def loop() do
+    oauth_client() |> all_entries()
+    Process.sleep(@sleep)
+    loop()
+  end
+
+  def oauth_client() do
     client =
       OAuth2.Client.new(
         strategy: OAuth2.Strategy.Password,
@@ -21,9 +44,12 @@ defmodule Remarkabag.Wallabag do
     client
   end
 
-  @entries_defaults [detail: "metadata", page: 1]
+  # archived: 0 picks up all entries, archived: 1 picks up only archived entries
+  # There is no way through the API to only return non-archived entries
+  @entries_defaults [detail: "metadata", page: 1, archived: 0]
   defp entries_options(options), do: Keyword.merge(@entries_defaults, options)
 
+  # Syncs any new entries in Wallabag to Entry Mnesia table
   def entries(oauth_client, options \\ []) do
     token =
       oauth_client
@@ -42,7 +68,8 @@ defmodule Remarkabag.Wallabag do
       |> Req.Request.run_request()
 
     entries =
-      for item <- response.body["_embedded"]["items"] do
+      # Only consider non-archived entries
+      for item <- response.body["_embedded"]["items"], item["is_archived"] == 0 do
         %{
           "given_url" => url,
           "hashed_given_url" => url_hash,
@@ -51,13 +78,12 @@ defmodule Remarkabag.Wallabag do
           "mimetype" => mimetype
         } = item
 
-        struct!(Entry, %{
-          id: id,
-          mimetype: mimetype,
-          title: title,
-          url: url,
-          url_hash: url_hash
-        })
+        case Entry.by_url_hash(url_hash) do
+          [] ->
+            Entry.write_from_wallabag(id, mimetype, title, url, url_hash)
+          _ ->
+            Logger.debug("Found record with #{url_hash} in Entry table already")
+        end
       end
 
     {entries, options[:page], response.body["pages"]}
