@@ -21,10 +21,12 @@ defmodule Remarkabag.MixProject do
   defp deps do
     [
       {:chromic_pdf, "~> 1.12"},
+      {:cookie, "~> 0.1"},
       {:elixir_uuid, "~> 1.2"},
-      {:oauth2, "~> 2.0"},
       {:jason, "~> 1.4"},
-      {:req, "0.3.11"}
+      {:multipart, "~> 0.4"},
+      {:oauth2, "~> 2.0"},
+      {:req, "~> 0.4"}
     ]
   end
 end

@@ -10,4 +10,9 @@ config :remarkabag,
 
   # Remarkable Cloud API
   remarkable_url: System.get_env("REMARKABLE_URL"),
-  rmapi_config: System.get_env("RMAPI_CONFIG")
+  rmapi_config: System.get_env("RMAPI_CONFIG"),
+
+  # Rmfakecloud API
+  rmfakecloud_url: System.get_env("RMFAKECLOUD_URL"),
+  rmfakecloud_username: System.get_env("RMFAKECLOUD_USERNAME"),
+  rmfakecloud_password: System.get_env("RMFAKECLOUD_PASSWORD")
